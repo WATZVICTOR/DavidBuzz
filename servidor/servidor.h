@@ -70,15 +70,15 @@ void FueraDeProtocolo(struct Cliente* cliente) {
 
 void DavidNoConectado(struct Cliente* cliente) {
     printf("<SERVIDOR/INFO> %d -> El usuario ha intenado ser guia de David, pero este aun no esta conectado.\n", cliente->ID_Cliente);
-    char msg[] = "David aun no esta conectado.\n";
-    send(cliente->Descriptor, msg, sizeof(msg), 0);
+    //char msg[] = "David aun no esta conectado.\n";
+    //send(cliente->Descriptor, msg, sizeof(msg), 0);
     CeroBytesEntrada(cliente);
 }
 
 void DavidYaConectado(struct Cliente* cliente) {
     printf("<SERVIDOR/INFO> %d -> SE HA INTENTADO CONECTAR OTRO DAVID.\n", cliente->ID_Cliente);
-    char msg[] = "David aun ya se encuentra conectado.\n";
-    send(cliente->Descriptor, msg, sizeof(msg), 0);
+    //char msg[] = "David aun ya se encuentra conectado.\n";
+    //send(cliente->Descriptor, msg, sizeof(msg), 0);
     CeroBytesEntrada(cliente);
 }
 

@@ -7,7 +7,8 @@
 #include <string.h>
 #include <pthread.h>
 #include "servidor.h"
-
+#include <time.h>
+#include <netinet/tcp.h>   /* TCP_KEEPIDLE, etc. */
 
 int david_conectado = 0;
 struct Cliente ptr_david;
@@ -25,6 +26,12 @@ void CerrarConexion(struct Cliente* cliente);
 
 // Este servidor ha sido construido usando mucho amor.
 int main(int argc, char** argv) {
+
+    int idle = 5;	/* Number of idle seconds before sending a KeepAlive probe. */
+    int interval = 5;	/* How often in seconds to resend an unacked KeepAlive probe. */
+    int count = 30;	/* How many times to resend a KA probe if previous probe was unacked. */
+
+
 
     // AREA DE DATOS
     int error;
@@ -53,6 +60,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
+
     // Ahora ya podemos pasar a construir el servidor.
 
     // 1º Socket
@@ -62,14 +70,55 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    // 2º Bind
+    // 2º Indicmaos que la conexion ha de mantenerse siempre alive.
+    int opcion = 1;
+    int opt_len = sizeof(opcion);
+    error = setsockopt(server_descriptor, SOL_SOCKET, SO_KEEPALIVE, &opcion, opt_len);
+    if ( error == -1) {
+        perror("Error en la funcion 1 KEEP_ALIVE: \n");
+        return 1;
+    }
+    error = setsockopt(server_descriptor, IPPROTO_TCP, TCP_KEEPIDLE, &idle, sizeof(idle));
+    if ( error == -1) {
+        perror("Error en la funcion 2 KEEP_ALIVE: \n");
+        return 1;
+    }
+    error = setsockopt(server_descriptor, IPPROTO_TCP, TCP_KEEPINTVL, &interval, sizeof(interval));
+    if ( error == -1) {
+        perror("Error en la funcion 3 KEEP_ALIVE: \n");
+        return 1;
+    }
+    error = setsockopt(server_descriptor, IPPROTO_TCP, TCP_KEEPCNT, &count, sizeof(count));
+    if ( error == -1) {
+        perror("Error en la funcion 4 KEEP_ALIVE: \n");
+        return 1;
+    }
+
+
+    error = getsockopt(server_descriptor, SOL_SOCKET, SO_KEEPALIVE, &opcion, &opt_len);
+    if ( error == -1) {
+        perror("Error en la funcion 5 KEEP_ALIVE: \n");
+        return 1;
+    }
+
+    printf("SO_KEEPALIVE - %d (1 Indica activado)\n", opcion);
+    printf("TCP_KEEPIDLE - %d\n", idle);
+    printf("TCP_KEEPINTVL - %d\n", interval);
+    printf("TCP_KEEPCNT - %d\n", count);
+
+
+
+
+
+
+    // 3º Bind
     error = bind(server_descriptor, (struct sockaddr *)&server, sizeof(server));
     if (error == -1) {
         perror("Error en la funcion BIND: \n");
         return 1;
     }
 
-    // 3º Listen
+    // 4º Listen
     error = listen(server_descriptor, 500);
     if (error == -1) {
         perror("Error en la funcion LISTEN: \n");
@@ -77,7 +126,7 @@ int main(int argc, char** argv) {
     }
     printf("Esperando conexiones entrantes...\n");
 
-    // 4º Accept
+    // 5º Accept
     // A partir de aqui hacemos un bucle eterno que se dedique a atender peticiones.
     for(;;) {
         // Esperamos la conexion de un cliente.
@@ -102,6 +151,7 @@ int main(int argc, char** argv) {
         return 1;
         }
     }
+   printf("<SERVIDOR/INFO> >FIN DEL PROGRAMA\n");
 }
 
 void *AtiendeCliente(void* ptr_cliente) {
@@ -113,7 +163,7 @@ void *AtiendeCliente(void* ptr_cliente) {
 
     if (cliente.Tipo == '1') AtenderDavid();
     if (cliente.Tipo == '0') AtenderGuia(&cliente);
-
+    //printf("<SERVIDOR/INFO> AtiendeCliente ha terminado con %d\n",cliente.ID_Cliente);
 }
 
 // Registra el cliente
@@ -205,9 +255,12 @@ void AtenderDavid() {
         if (aux.bytes_entrada==0) {
             CeroBytesEntrada(&ptr_david);
             david_conectado = 0;
+            printf("<SERVIDOR/INFO> David desconectado.\n");
             return;
         }
-        printf("DEBUG\n");
+	if (aux.bytes_entrada>0) {
+	    printf("David a enviado datos... Esto no deberias ser posible.\n");
+	}
 
     }
 
@@ -242,6 +295,7 @@ void AtenderGuia(struct Cliente* cliente) {
         }
         if (aux.buffer_entrada == 'x') {
             david_conectado = 0;
+            close(ptr_david.Descriptor);
             ResetDavid(cliente);
             continue;
         }
