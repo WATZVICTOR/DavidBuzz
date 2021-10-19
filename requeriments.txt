@@ -1,0 +1,12 @@
+Mac de fer (10.14.5 Mojave MacBook Air) puede como maximo con la version Xcode 11.3.1 y demas hay que instalar el certificado de appel para instalar la applicacion.
+
+Si no estas en el macbook de Fer con isnatalr la ULTIMA version de Xcode es suficiente.
+
+Certificado 
+(Lo insatalas y reinicias, si no funciona, borras todos los certificados, del keyhchain y lo isnatlas, y de seguido reinicias)
+
+https://www.apple.com/certificateauthority/AppleWWDRCAG3.cer
+
+Xcode 11.3.1
+
+https://download.developer.apple.com/Developer_Tools/Xcode_11.3.1/Xcode_11.3.1.xip
